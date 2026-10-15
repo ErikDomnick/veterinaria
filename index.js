@@ -3,165 +3,192 @@ import express from 'express';
 
 const app = express();
 app.use(express.json());
-app.use("/veterinaria");
+app.use("/pets");
 
 
 
 //DADOS MALIGNOS
 let ultimoId = 3;
 let pets = [
-    {idPet: 1, desNome: "Rex", dsEspecie: "cachorro", nuIdade: 3, fgAdotado: false},
-    {idPet: 2, desNome: "Negoney", dsEspecie: "humano", nuIdade: 9, fgAdotado: false},
-    {idPet: 3, desNome: "Manga", dsEspecie: "fruta", nuIdade: 1, fgAdotado: false}
+    {idPet: 1, dsNome: "Rex", dsEspecie: "cachorro", nuIdade: 3, fgAdotado: false},
+    {idPet: 2, dsNome: "Negoney", dsEspecie: "humano", nuIdade: 9, fgAdotado: false},
+    {idPet: 3, dsNome: "Manga", dsEspecie: "fruta", nuIdade: 1, fgAdotado: false}
 ];
 
 
 
 //FUNCOES DO CONTROLLERS SÓ QUE NAO NO CONTROLLERS
 export function findAll(res) {
-    /*let todosOsLivros = livros; // (res -> router -> controller -> router -> res) controller nao conhece o res
-    return todosOsLivros*/
-
-    //res.json(livros); // triangulo (res -> router -> controller -> res), controller conhece o res
-
-    return livros;
+    return pets;
 };
 
 export function findOne(id) {
-    let livro = livros.find(livro => livro.idLivro === id);
+    let pet = pets.find(pet => pet.idPet === id);
 
-    return livro;
+    return pet;
 };
 
-export function criarLivro(titulo, autor) {
+export function cadPet(nome, especie, idade) {
     let novoId = ultimoId + 1;
     ultimoId++;
 
-    let novoLivro = {
-        idLivro: novoId,
-        stTitutlo: titulo,
-        stAutor: autor,
-        blDisponivel: true
+    let novoPet = {
+        idPet: novoId,
+        dsNome: nome,
+        dsEspecie: especie,
+        nuIdade: idade,
+        fgAdotado: false
     };
 
-    livros.push(novoLivro);
-    return novoLivro;
+    pets.push(novoPet);
+    return novoPet;
 };
 
-export function deletarLivro(id) {
-    let indexLivro = livros.findIndex(livro => livro.idLivro === id);
+export function attPet(id, nome, especie, idade, adotado) {
+    let indexPet = pets.findIndex(pet => pet.idPet === id);
 
-    livros.splice(indexLivro, 1);
-};
-
-export function editarLivro(id, titulo, autor, disp) {
-    let indexLivro = livros.findIndex(livro => livro.idLivro === id);
-
-    if (indexLivro === -1) {
+    if (indexPet === -1) {
         return null; 
     }
 
-    const livroAtual = livros[indexLivro];
+    const petAtual = pets[indexPet];
 
-    const livroEdit = {
-        idLivro: id,
-        stTitulo: titulo ?? livroAtual.stTitulo,
-        stAutor: autor ?? livroAtual.stAutor,
-        blDisponivel: disp ?? livroAtual.blDisponivel
+    // ?? verifica se é nulo ou indefinido, entao se no body nao tem, ele permanece como tava antes
+    const petEdit = {
+        idPet: id,
+        dsNome: nome ?? petAtual.dsNome,
+        dsEspecie: especie ?? petAtual.dsEspecie,
+        nuIdade: idade ?? petAtual.nuIdade,
+        fgAdotado: adotado ?? petAtual.fgAdotado
     };
 
-    livros.splice(indexLivro, 1, livroEdit);
+    pets.splice(indexPet, 1, petEdit);
 
-    return livroEdit;
+    return petEdit;
+};
+
+export function removerPet(id) {
+    let indexPet = pets.findIndex(pet => pet.idPet === id);
+
+    pets.splice(indexPet, 1);
 };
 
 
 
 //ROTAS
-router.get("/", cLog, (req, res) => {
-    /*const todosOsLivros = findAll(); //controller nao conhece o res
-    console.log(todosOsLivros);*/
-
-    //findAll(res); // triangulo, controller conhece o res
-
-    const todosOsLivros = findAll();
-    res.json(todosOsLivros);
+app.get("/", (req, res) => {
+    const todosOsPets = findAll();
+    res.status(200).json(todosOsPets);
 });
 
-router.get("/:id", cLog, (req, res) => {
-    const idLivro = parseInt(req.params.id);
+app.get("/:id", (req, res) => {
+    const idPet = parseInt(req.params.id);
 
-    if(isNaN(idLivro)) {
+    if(isNaN(idPet)) {
         return res
             .status(400) //requisicao mal formada
-            .json({mensagem: "o parametro precisa ser um numero valido"});
+            .json({ "mensagem": "identificador deve ser um numero" });
     }
 
-    let livro = findOne(idLivro);
+    let pet = findOne(idPet);
 
-    if(!livro) {
-        res.status(404).send();
+    if(!pet) {
+        res.sendStatus(404);
     }
 
-    res.json(livro);
+    res.status(200).json(pet);
 });
 
-router.post("/", cLog, (req, res) => {
-    let tituloEnviado = req.body.stTitulo;
-    let autorEnviado = req.body.stAutor;
+app.post("/", (req, res) => {
+    let nomeEnviado = req.body.dsNome;
+    let especieEnviada = req.body.dsEspecie;
+    let idadeEnviada = req.body.nuIdade;
 
-    if (!autorEnviado || !tituloEnviado) {
+    if (!nomeEnviado || !especieEnviada) {
         return res
             .status(400)
-            .json({ mensagem: "dados faltando, verifique autor e titulo" });
+            .json({ "mensagem": "dados faltando, verifique nome e especie" });
     }
 
-    let livroCriado = criarLivro(tituloEnviado, autorEnviado);
-    if(!livroCriado) {
-        return res.status(500).json({ mensagem: "algo deu errado" });
+    if(!nuIdade || isNaN(nuIdade) || nuIdade < 0) {
+        return res
+            .status(400)
+            .json({ "mensagem": "verifique se idade é um número positivo, e se idade nao está vazia" });
     }
 
-    return res.status(201).json(livroCriado);
+    let petCriado = cadPet(nomeEnviado, especieEnviada, idadeEnviada);
+    if(!petCriado) {
+        return res
+        .status(500)
+        .json({ "mensagem": "algo deu errado" });
+    }
+
+    return res.status(201).json(petCriado);
 });
 
-router.delete("/:id", cLog, (req, res) => {
-    const idLivro = parseInt(req.params.id);
+app.patch("/:id", (req, res) => {
+    const idPet = parseInt(req.params.id);
 
-    if(isNaN(idLivro)) {
-        res.status(400).json({ mensagem: "identificador deve ser um numero" });
-    }
-
-    let livro = findOne(idLivro);
-    if(!livro) {
-        res.status(404).send();
-    }
-
-    deletarLivro(idLivro);
-    res.sendStatus(204);
-});
-
-router.patch("/:id", cLog, (req, res) => {
-    const idLivro = parseInt(req.params.id);
-
-    const novoTitulo = req.body.stTitulo;
-    const novoAutor = req.body.stAutor;
-    const novoDisponivel = req.body.blDisponivel;
+    const novoNome = req.body.dsNome;
+    const novaEspecie = req.body.dsEspecie;
+    const novaIdade = req.body.nuIdade;
+    const novoAdotado = req.body.fgAdotado;
     
-    if(isNaN(idLivro)) {
+    if(isNaN(idPet)) {
         return res
             .status(400)
-            .json({ mensagem: "identificador precisa ser um numero valido" });
+            .json({ "mensagem": "identificador deve ser um numero" });
     }
 
-    let livroAtt = [editarLivro(idLivro, novoTitulo, novoAutor, novoDisponivel)];
-
-    if(!livroAtt) {
-        return res.status(500).json({ mensagem: "algo deu errado" });
+    if(isNaN(novaIdade) || novaIdade < 0) {
+        return res
+            .status(400)
+            .json({ "mensagem": "idade deve ser um numero positivo" });
     }
 
-    res.sendStatus(204);
+    if(novoNome.trim() === "" || novaEspecie.trim() === "" ) {
+        return res
+            .status(400)
+            .json({ "mensagem": "nome ou especie vazios" });
+    }
+
+    if(novoAdotado !== false || novoAdotado !== true) {
+        return res
+            .status(400)
+            .json({ "mensagem": "adotado deve ser um valor booleano, false ou true" });
+    }
+
+    let petAtt = attPet(idPet, novoNome, novaEspecie, novaIdade, novoAdotado);
+
+    if(!petAtt) {
+        return res.status(500).json({ "mensagem": "algo deu errado" });
+    }
+
+    let pet = findOne(idPet);
+    if(!pet) {
+        res.sendStatus(404);
+    }
+
+    res.status(200).json(petAtt);
 });
 
+app.delete("/:id", (req, res) => {
+    const idPet = parseInt(req.params.id);
+
+    if(isNaN(idPet)) {
+        res
+        .status(400)
+        .json({ "mensagem": "identificador deve ser um numero" });
+    }
+
+    let pet = findOne(idPet);
+    if(!pet) {
+        res.sendStatus(404);
+    }
+
+    removerPet(idPet);
+    res.sendStatus(204);
+});
 
 
 //FINAL
