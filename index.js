@@ -3,7 +3,6 @@ import express from 'express';
 
 const app = express();
 app.use(express.json());
-app.use("/pets");
 
 
 
@@ -18,17 +17,17 @@ let pets = [
 
 
 //FUNCOES DO CONTROLLERS SÓ QUE NAO NO CONTROLLERS
-export function findAll(res) {
+function findAll(res) {
     return pets;
 };
 
-export function findOne(id) {
+function findOne(id) {
     let pet = pets.find(pet => pet.idPet === id);
 
     return pet;
 };
 
-export function cadPet(nome, especie, idade) {
+function cadPet(nome, especie, idade) {
     let novoId = ultimoId + 1;
     ultimoId++;
 
@@ -44,7 +43,7 @@ export function cadPet(nome, especie, idade) {
     return novoPet;
 };
 
-export function attPet(id, nome, especie, idade, adotado) {
+function attPet(id, nome, especie, idade, adotado) {
     let indexPet = pets.findIndex(pet => pet.idPet === id);
 
     if (indexPet === -1) {
@@ -67,7 +66,7 @@ export function attPet(id, nome, especie, idade, adotado) {
     return petEdit;
 };
 
-export function removerPet(id) {
+function removerPet(id) {
     let indexPet = pets.findIndex(pet => pet.idPet === id);
 
     pets.splice(indexPet, 1);
@@ -76,12 +75,12 @@ export function removerPet(id) {
 
 
 //ROTAS
-app.get("/", (req, res) => {
+app.get("/pets", (req, res) => {
     const todosOsPets = findAll();
     res.status(200).json(todosOsPets);
 });
 
-app.get("/:id", (req, res) => {
+app.get("/pets/:id", (req, res) => {
     const idPet = parseInt(req.params.id);
 
     if(isNaN(idPet)) {
@@ -99,7 +98,7 @@ app.get("/:id", (req, res) => {
     res.status(200).json(pet);
 });
 
-app.post("/", (req, res) => {
+app.post("/pets", (req, res) => {
     let nomeEnviado = req.body.dsNome;
     let especieEnviada = req.body.dsEspecie;
     let idadeEnviada = req.body.nuIdade;
@@ -110,7 +109,7 @@ app.post("/", (req, res) => {
             .json({ "mensagem": "dados faltando, verifique nome e especie" });
     }
 
-    if(!nuIdade || isNaN(nuIdade) || nuIdade < 0) {
+    if(!idadeEnviada || isNaN(idadeEnviada) || idadeEnviada < 0) {
         return res
             .status(400)
             .json({ "mensagem": "verifique se idade é um número positivo, e se idade nao está vazia" });
@@ -126,7 +125,7 @@ app.post("/", (req, res) => {
     return res.status(201).json(petCriado);
 });
 
-app.patch("/:id", (req, res) => {
+app.patch("/pets/:id", (req, res) => {
     const idPet = parseInt(req.params.id);
 
     const novoNome = req.body.dsNome;
@@ -172,7 +171,7 @@ app.patch("/:id", (req, res) => {
     res.status(200).json(petAtt);
 });
 
-app.delete("/:id", (req, res) => {
+app.delete("/pets/:id", (req, res) => {
     const idPet = parseInt(req.params.id);
 
     if(isNaN(idPet)) {
